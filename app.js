@@ -16,6 +16,10 @@ const paymentHint = document.querySelector('#payment-hint');
 const checkoutButton = document.querySelector('#checkout-button');
 const newTransactionButton = document.querySelector('#new-transaction');
 const confirmation = document.querySelector('#payment-confirmation');
+const viewReceiptButton = document.querySelector('#view-receipt');
+const successModal = document.querySelector('#success-modal');
+const receiptModal = document.querySelector('#receipt-modal');
+const resetModal = document.querySelector('#reset-modal');
 const receipt = document.querySelector('#receipt');
 const receiptReference = document.querySelector('#receipt-reference');
 const receiptLines = document.querySelector('#receipt-lines');
@@ -23,6 +27,7 @@ const receiptSummary = document.querySelector('#receipt-summary');
 const cart = new Map();
 let completedTransaction = null;
 let transactionSequence = 1;
+const modalTriggers = new WeakMap();
 
 const money = (amount) => `\u20B1${amount.toFixed(2)}`;
 
@@ -51,11 +56,11 @@ function renderCart() {
         </div>
         <div class="cart-row-bottom">
           <div class="quantity-controls" aria-label="Quantity controls">
-            <button class="quantity-button decrease-button" type="button" aria-label="Decrease quantity">&#8722;</button>
+            <button class="quantity-button decrease-button" type="button" aria-label="Decrease ${product.name} quantity">&#8722;</button>
             <span class="quantity-value" aria-live="polite"></span>
-            <button class="quantity-button increase-button" type="button" aria-label="Increase quantity">+</button>
+            <button class="quantity-button increase-button" type="button" aria-label="Increase ${product.name} quantity">+</button>
           </div>
-          <button class="remove-button" type="button">Remove</button>
+          <button class="remove-button" type="button" aria-label="Remove ${product.name}">Remove</button>
         </div>`;
       row.querySelector('.cart-item-name').textContent = product.name;
       row.querySelector('.cart-unit-price').textContent = `${money(product.price)} each`;
@@ -74,6 +79,7 @@ function renderCart() {
   cashInput.disabled = !hasItems || Boolean(completedTransaction);
   checkoutButton.disabled = !hasItems || Boolean(completedTransaction);
   newTransactionButton.disabled = !hasItems && !completedTransaction;
+  viewReceiptButton.hidden = !completedTransaction;
   productList.querySelectorAll('.product-card').forEach((button) => {
     button.disabled = Boolean(completedTransaction);
   });
@@ -132,11 +138,13 @@ function validatePayment() {
     return null;
   }
   const total = [...cart.values()].reduce((sum, entry) => sum + entry.product.price * entry.quantity, 0);
-  if (paid < total) {
+  const paidCents = Math.round(paid * 100);
+  const totalCents = Math.round(total * 100);
+  if (paidCents < totalCents) {
     showPaymentError(`Insufficient payment. The total is ${money(total)}.`);
     return null;
   }
-  return { paid, total };
+  return { paid: paidCents / 100, total: totalCents / 100 };
 }
 
 function renderReceipt(transaction) {
@@ -170,7 +178,7 @@ function confirmPayment() {
   transactionSequence += 1;
   completedTransaction = {
     ...payment,
-    change: payment.paid - payment.total,
+    change: (Math.round(payment.paid * 100) - Math.round(payment.total * 100)) / 100,
     reference,
     items: [...cart.values()].map((entry) => ({ ...entry })),
   };
@@ -178,6 +186,9 @@ function confirmPayment() {
   confirmation.hidden = false;
   renderReceipt(completedTransaction);
   renderCart();
+  document.querySelector('#success-modal-message').textContent =
+    `Transaction ${reference} is complete. Change due: ${money(completedTransaction.change)}.`;
+  openModal(successModal, checkoutButton);
 }
 
 function startNewTransaction() {
@@ -188,10 +199,29 @@ function startNewTransaction() {
   paymentHint.classList.remove('payment-error');
   confirmation.textContent = '';
   confirmation.hidden = true;
-  receipt.hidden = true;
   receiptLines.replaceChildren();
   receiptSummary.replaceChildren();
   renderCart();
+  productList.querySelector('.product-card')?.focus();
+}
+
+function openModal(dialog, trigger) {
+  if (dialog.open) return;
+  modalTriggers.set(dialog, trigger);
+  dialog.showModal();
+  (dialog.querySelector('[data-initial-focus]') || dialog.querySelector('button:not([disabled])'))?.focus();
+}
+
+for (const dialog of [successModal, receiptModal, resetModal]) {
+  dialog.addEventListener('close', () => {
+    const trigger = modalTriggers.get(dialog);
+    const fallback = dialog === successModal ? viewReceiptButton : null;
+    if (trigger?.isConnected && !trigger.disabled && !trigger.hidden) trigger.focus();
+    else if (fallback?.isConnected && !fallback.disabled && !fallback.hidden) fallback.focus();
+  });
+  dialog.querySelectorAll('[data-close-modal]').forEach((button) => {
+    button.addEventListener('click', () => dialog.close());
+  });
 }
 
 for (const product of PRODUCTS) {
@@ -212,11 +242,29 @@ for (const product of PRODUCTS) {
 cashInput.addEventListener('input', () => {
   paymentHint.classList.remove('payment-error');
   cashInput.removeAttribute('aria-invalid');
+  paymentHint.textContent = cashInput.value === ''
+    ? 'Enter the cash amount received.'
+    : 'Amount entered. Confirm payment to calculate change.';
 });
 cashInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && !checkoutButton.disabled) confirmPayment();
 });
 checkoutButton.addEventListener('click', confirmPayment);
-newTransactionButton.addEventListener('click', startNewTransaction);
+viewReceiptButton.addEventListener('click', () => openModal(receiptModal, viewReceiptButton));
+document.querySelector('#success-view-receipt').addEventListener('click', () => {
+  successModal.close();
+  openModal(receiptModal, viewReceiptButton);
+});
+newTransactionButton.addEventListener('click', () => {
+  document.querySelector('#reset-modal-message').textContent = completedTransaction
+    ? 'This clears the completed order, payment details, and receipt from this screen.'
+    : 'This clears every item in the current cart. This action cannot be undone.';
+  openModal(resetModal, newTransactionButton);
+});
+document.querySelector('#cancel-reset').addEventListener('click', () => resetModal.close());
+document.querySelector('#confirm-reset').addEventListener('click', () => {
+  resetModal.close();
+  startNewTransaction();
+});
 document.querySelector('#print-receipt').addEventListener('click', () => window.print());
 renderCart();
