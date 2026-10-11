@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campus Cafeteria POS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="pos-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">CAMPUS CAFETERIA</p>
+        <h1>Point of Sale</h1>
+        <p class="subheading">Choose menu items to start an order.</p>
+      </div>
+      <div class="service-badge"><span class="status-dot"></span> Counter service</div>
+    </header>
+
+    <div class="workspace">
+      <section class="menu-panel" aria-labelledby="menu-heading">
+        <div class="section-heading">
+          <div><p class="eyebrow">TODAY'S MENU</p><h2 id="menu-heading">Food &amp; drinks</h2></div>
+          <span class="item-count">6 items</span>
+        </div>
+        <div class="product-grid" id="product-list" aria-label="Products">
+          <!-- Product buttons are generated from the fixed menu in app.js. -->
+        </div>
+      </section>
+
+      <aside class="order-panel" aria-labelledby="order-heading">
+        <div class="section-heading order-title">
+          <div><p class="eyebrow">CURRENT ORDER</p><h2 id="order-heading">Order summary</h2></div>
+          <span class="order-number"># New</span>
+        </div>
+        <div class="cart-area" id="cart-items" aria-live="polite">
+          <div class="empty-cart">
+            <div class="empty-icon" aria-hidden="true">＋</div>
+            <h3>Your order is empty</h3>
+            <p>Select an item from the menu to add it here.</p>
+          </div>
+        </div>
+        <div class="order-total"><span>Total</span><strong id="order-total">₱0.00</strong></div>
+
+        <div class="payment-area">
+          <label for="cash-input">Cash received</label>
+          <div class="cash-input-wrap"><span>₱</span><input id="cash-input" type="text" inputmode="decimal" placeholder="0.00" disabled aria-describedby="payment-hint"></div>
+          <p id="payment-hint" class="payment-hint">Payment will be available after adding items.</p>
+          <button class="checkout-button" type="button" disabled>Confirm payment <span aria-hidden="true">→</span></button>
+        </div>
+        <button class="new-transaction" type="button" disabled>＋&nbsp; New transaction</button>
+      </aside>
+    </div>
+    <footer>Campus Cafeteria <span>•</span> Point of Sale</footer>
+  </main>
+  <script src="app.js" defer></script>
+</body>
+</html>
