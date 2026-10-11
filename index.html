@@ -40,15 +40,22 @@
             <p>Select an item from the menu to add it here.</p>
           </div>
         </div>
-        <div class="order-total"><span>Total</span><strong id="order-total">₱0.00</strong></div>
+        <div class="order-total"><span>Total</span><strong id="order-total">&#8369;0.00</strong></div>
 
         <div class="payment-area">
           <label for="cash-input">Cash received</label>
-          <div class="cash-input-wrap"><span>₱</span><input id="cash-input" type="text" inputmode="decimal" placeholder="0.00" disabled aria-describedby="payment-hint"></div>
-          <p id="payment-hint" class="payment-hint">Payment will be available after adding items.</p>
-          <button class="checkout-button" type="button" disabled>Confirm payment <span aria-hidden="true">→</span></button>
+          <div class="cash-input-wrap"><span aria-hidden="true">&#8369;</span><input id="cash-input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" disabled aria-describedby="payment-hint"></div>
+          <p id="payment-hint" class="payment-hint" role="status">Payment will be available after adding items.</p>
+          <button class="checkout-button" id="checkout-button" type="button" disabled>Confirm payment <span aria-hidden="true">&#8594;</span></button>
         </div>
-        <button class="new-transaction" type="button" disabled>＋&nbsp; New transaction</button>
+        <div class="payment-confirmation" id="payment-confirmation" role="status" hidden></div>
+        <button class="new-transaction" id="new-transaction" type="button" disabled>&#43;&nbsp; New transaction</button>
+        <section class="receipt" id="receipt" aria-labelledby="receipt-heading" hidden>
+          <div class="receipt-heading"><div><p class="eyebrow">PAYMENT COMPLETE</p><h2 id="receipt-heading">Digital receipt</h2></div><span class="receipt-reference" id="receipt-reference"></span></div>
+          <div class="receipt-lines" id="receipt-lines"></div>
+          <div class="receipt-summary" id="receipt-summary"></div>
+          <button class="print-button" id="print-receipt" type="button">Print receipt</button>
+        </section>
       </aside>
     </div>
     <footer>Campus Cafeteria <span>•</span> Point of Sale</footer>
